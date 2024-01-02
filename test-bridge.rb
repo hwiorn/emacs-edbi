@@ -26,7 +26,7 @@ cl = Elrpc.start_process(["bundle", "exec", "ruby", "edbi-bridge.rb"])
 
  # synchronous calling
 #puts cl.call_method("connect", "dbi:SQLite3:/Users/gglee/test.sqlite", "", "")
-puts cl.call_method("connect", "dbi:SQLite3:/Users/gglee/test.sqlite", "", "")
+puts cl.call_method("connect", "dbi:SQLite3:/Users/gglee/test.sqlite", " ", " ")
 
 #  # asynchronous calling
 # cl.call_method_async("echo", "3 world") do |err, value|
