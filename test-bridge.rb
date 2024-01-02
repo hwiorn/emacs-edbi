@@ -22,7 +22,7 @@ require 'elrpc'
 
 
  # start a server process
-cl = Elrpc.start_process(["bundle", "exec", "ruby","edbi-bridge.rb"])
+cl = Elrpc.start_process(["bundle", "exec", "ruby", "edbi-bridge.rb"])
 
  # synchronous calling
 #puts cl.call_method("connect", "dbi:SQLite3:/Users/gglee/test.sqlite", "", "")
