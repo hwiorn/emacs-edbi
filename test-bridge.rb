@@ -23,6 +23,7 @@ require 'elrpc'
 
  # start a server process
 cl = Elrpc.start_process(["bundle", "exec", "ruby", "edbi-bridge.rb"])
+sleep 0.2
 
  # synchronous calling
 puts cl.call_method("connect", "dbi:SQLite3:/Users/gglee/test.sqlite", "", "")
@@ -33,9 +34,9 @@ puts cl.call_method("connect", "dbi:SQLite3:/Users/gglee/test.sqlite", "", "")
 # end
 
 # puts "2 wait"
-# sleep 0.2
+sleep 2
 
 gets
 # puts "4 ok"
 #  # kill the server process
-cl.stop
+#cl.stop
