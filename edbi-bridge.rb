@@ -11,7 +11,11 @@ $sth = nil
  # start server
 server = Elrpc.start_server()
 
-server.def_method "connect"  do |data_source, username, auth|
+server.def_method "add"  do |a, b|
+  a+b
+end
+
+server.def_method "connect"  do |ds, username|
 # server.def_method "connect"do |args|
   return "hh"
   # auth = nil if auth.empty?
