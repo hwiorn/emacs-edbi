@@ -13,11 +13,12 @@ server = Elrpc.start_server()
 
 server.def_method "add"  do |a, b|
   a+b
+  return "hh"
 end
 
 server.def_method "connect"  do |ds, username|
+  "hh"
 # server.def_method "connect"do |args|
-  return "hh"
   # auth = nil if auth.empty?
   # if $dbh
   #   $dbh.disconnect
