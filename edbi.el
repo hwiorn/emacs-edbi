@@ -107,9 +107,9 @@
 (defvar edbi:driver-libpath (file-name-directory (or load-file-name "."))
   "directory for the driver program.")
 
-(defvar edbi:driver-info (list "perl"
+(defvar edbi:driver-info (list "ruby"
                                (expand-file-name
-                                "edbi-bridge.pl"
+                                "edbi-bridge.rb"
                                 edbi:driver-libpath))
   "driver program info.")
 

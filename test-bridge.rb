@@ -23,13 +23,13 @@ require 'elrpc'
 
 Elrpc.set_default_log_level(Logger::DEBUG)
  # start a server process
-#cl = Elrpc.start_process(["bundle", "exec", "ruby", "edbi-bridge.rb"])
-cl = Elrpc.start_process(["ruby", "edbi-bridge.rb"])
+cl = Elrpc.start_process(["bundle", "exec", "ruby", "edbi-bridge.rb"])
 puts cl.inspect
 sleep 0.2
 
  # synchronous calling
-puts cl.call_method("connect", "dbi:SQLite3:/Users/gglee/test.sqlite", "", "")
+#puts cl.call_method("connect", "dbi:SQLite3:/Users/gglee/test.sqlite", "", "")
+puts cl.call_method("add", 1, 2)
 
 #  # asynchronous calling
 # cl.call_method_async("echo", "3 world") do |err, value|

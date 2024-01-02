@@ -8,3 +8,7 @@ gem 'rails', '~> 7.1'
 gem 'rails-erd', '~> 1.7'
 
 gem "warbler", "~> 2.0", :group => :development
+
+gem "timeout", "~> 0.4.1"
+
+gem "dbd-sqlite3", "~> 1.2"
