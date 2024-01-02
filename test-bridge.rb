@@ -1,0 +1,20 @@
+#!/usr/bin/env ruby
+require 'elrpc'
+
+ # start a server process
+cl = Elrpc.start_process(["ruby","edbi-bridge.rb"])
+
+ # synchronous calling
+puts cl.call_method("connect", "dbi:SQLite3:/Users/gglee/test.sqlite", "", "")
+
+#  # asynchronous calling
+# cl.call_method_async("echo", "3 world") do |err, value|
+#   puts value
+# end
+
+# puts "2 wait"
+# sleep 0.2
+
+# puts "4 ok"
+#  # kill the server process
+cl.stop
