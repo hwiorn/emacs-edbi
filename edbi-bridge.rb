@@ -23,8 +23,9 @@ server.def_method "connect" do |data_source, username, auth|
     abort("Could not connect to database:\n - Data Source (#{data_source})\n - User Name: (#{username}):\n - DBI error: (#{e.message})")
   end
 
-  row = $dbh.select_one("SELECT VERSION()")
-  return row[0]
+  return "1.0"
+  #row = $dbh.select_one("SELECT VERSION()")
+  #return row[0]
 end
 
 server.def_method "do" do |sql, params|
