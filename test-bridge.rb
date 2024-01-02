@@ -21,8 +21,10 @@ require 'elrpc'
 #   )
 
 
+Elrpc.set_default_log_level(Logger::DEBUG)
  # start a server process
-cl = Elrpc.start_process(["bundle", "exec", "ruby", "edbi-bridge.rb"])
+#cl = Elrpc.start_process(["bundle", "exec", "ruby", "edbi-bridge.rb"])
+cl = Elrpc.start_process(["ruby", "edbi-bridge.rb"])
 sleep 0.2
 
  # synchronous calling
