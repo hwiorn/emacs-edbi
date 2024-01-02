@@ -16,23 +16,20 @@ server.def_method "add"  do |a, b|
   next "hh"
 end
 
-server.def_method "connect"  do |ds, username|
-  "hh"
-# server.def_method "connect"do |args|
-  # auth = nil if auth.empty?
-  # if $dbh
-  #   $dbh.disconnect
-  # end
+server.def_method "connect"  do |data_source, username, auth|
+  auth = nil if auth.empty?
+  if $dbh
+    $dbh.disconnect
+  end
 
-  # begin
-  #   $dbh = DBI.connect(data_source, username, auth)
-  # rescue DBI::DatabaseError => e
-  #   abort("Could not connect to database:\n - Data Source (#{data_source})\n - User Name: (#{username}):\n - DBI error: (#{e.message})")
-  # end
+  begin
+    $dbh = DBI.connect(data_source, username, auth)
+  rescue DBI::DatabaseError => e
+    abort("Could not connect to database:\n - Data Source (#{data_source})\n - User Name: (#{username}):\n - DBI error: (#{e.message})")
+  end
 
-  # return "1.0"
-  # #row = $dbh.select_one("SELECT VERSION()")
-  # #return row[0]
+  row = $dbh.select_one("SELECT VERSION()")
+  next row[0]
 end
 
 server.def_method "do" do |sql, params|
