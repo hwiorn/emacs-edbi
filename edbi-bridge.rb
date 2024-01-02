@@ -13,7 +13,7 @@ server = Elrpc.start_server()
 
 server.def_method "add"  do |a, b|
   a+b
-  return "hh"
+  next "hh"
 end
 
 server.def_method "connect"  do |ds, username|
