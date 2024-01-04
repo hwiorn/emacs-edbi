@@ -1,8 +1,6 @@
 require 'elrpc'
 require 'dbi'
 
-Signal.trap("SIGPIPE", "SYSTEM_DEFAULT")
-
 $dbh = nil
 $sth = nil
 
