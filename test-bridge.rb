@@ -1,5 +1,6 @@
 #!/usr/bin/env ruby
 require 'elrpc'
+require 'monitor'
 
 # (require 'edbi)
 # (setq conn1 (edbi:start))
@@ -20,7 +21,6 @@ require 'elrpc'
 #   ;;(epc:stop-epc epc)
 #   )
 
-
 Elrpc.set_default_log_level(Logger::DEBUG)
  # start a server process
 cl = Elrpc.start_process(["bundle", "exec", "ruby", "edbi-bridge.rb"])
@@ -40,7 +40,7 @@ puts "dd"
 # puts "2 wait"
 sleep 2
 
-#gets
+gets
 # puts "4 ok"
 #  # kill the server process
 cl.stop
