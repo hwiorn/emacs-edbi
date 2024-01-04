@@ -43,4 +43,4 @@ sleep 2
 #gets
 # puts "4 ok"
 #  # kill the server process
-#cl.stop
+cl.stop
