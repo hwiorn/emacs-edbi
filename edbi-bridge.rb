@@ -15,6 +15,10 @@ class EdbiHandler
     a+b
   end
 
+  def ping(arg)
+        "pong: #{arg}"
+  end
+
   def connect(data_source, username, auth)
     auth = nil if auth.empty?
     if $dbh
@@ -36,9 +40,63 @@ class EdbiHandler
     $dbh.do sql, *params
   end
 
-  def ping(arg)
-        "pong: #{arg}"
+  def select_all(sql, params)
+    return nil unless $dbh
+    $dbh.select_all sql, *params
   end
+
+
+  def prepare(sql)
+    return nil unless $dbh
+    if $sth
+      $sth.finish
+    end
+    $sth = $dbh.prepare sql
+    'sth'
+  end
+
+server.def_method "execute" do |params|
+  return nil unless $sth
+  $sth.execute params
+end
+
+# $dbh.columns
+server.def_method "fetch-columns" do ||
+  return nil unless $sth
+  $sth.column_names
+end
+
+server.def_method "fetch" do |num|
+  return nil unless $sth
+  return $sth.fetch_all unless num
+  return $sth.fetch_many num
+end
+
+server.def_method "auto-commit" do |flag|
+  return nil unless $dbh
+  ac = flag == "true" ? 1 : 0
+  $dbh.do "SET autocommit = #{ac}"
+  ac
+end
+
+server.def_method "commit" do ||
+  return nil unless $dbh
+  $dbh.commit
+  return 1
+end
+
+server.def_method "rollback" do ||
+  return nil unless $dbh
+  $dbh.rollback
+  return 1
+end
+
+server.def_method "disconnect" do ||
+  return nil unless $dbh
+  $dbh.disconnect
+  return 1
+end
+
 end
 
  # FIXME: make as cli option
