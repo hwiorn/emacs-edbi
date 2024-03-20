@@ -241,7 +241,9 @@ for library users to inspect where the problem is occurred. If
 `edbi:connect' is failed, the DB setting or environment is
 wrong."
   (edbi:connection
-   (epc:start-epc (car edbi:driver-info) (cdr edbi:driver-info))))
+   (jsonrpc-process-connection "edbi-bridge-server"
+                               :command (car edbi:driver-info)
+                               :command-args (cdr edbi:driver-info))))
 
 (defun edbi:finish (conn)
   "Terminate the EPC process."
