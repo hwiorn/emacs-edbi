@@ -11,5 +11,8 @@ class EchoHandler
 end
 
 server = Jimson::Server.new(EchoHandler.new, :port => 0)
+t = Thread.new { server.start }
+#puts server.port
+sleep 1
 puts server.port
-server.start
+t.join
