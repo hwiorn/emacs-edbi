@@ -1,6 +1,8 @@
 require 'elrpc'
 
-def start_process(cmd, port)
+
+def start_process(cmd, host="http://localhost")
+
 end
 
  # start a server process
