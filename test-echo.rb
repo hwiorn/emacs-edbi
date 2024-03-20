@@ -1,7 +1,10 @@
 require 'elrpc'
 
+def start_process(cmd, port)
+end
+
  # start a server process
-cl = Elrpc.start_process(["ruby","echo.rb"])
+#cl = Elrpc.start_process(["ruby","echo.rb"])
 
  # synchronous calling
 puts cl.call_method("echo", "1 hello")
