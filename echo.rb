@@ -12,4 +12,4 @@ end
 
 server = Jimson::Server.new(EchoHandler.new)
 puts server.port
-server.start
+server.start(:port => 0)
