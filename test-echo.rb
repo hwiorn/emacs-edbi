@@ -6,10 +6,9 @@ module JElrpc
     # TODO run shell and read first line as port
     io = IO.popen(cmd)
     port = io.gets.to_i
-    # if !port
-    #   port = 8999
-    # end
-    host = "#{host}:#{port}"
+    if port
+      host = "#{host}:#{port}"
+    end
     client = Jimson::Client.new(host)
     return client
   end
