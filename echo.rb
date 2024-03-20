@@ -9,5 +9,5 @@ class EchoHandler
 end
 
 server = Jimson::Server.new(EchoHandler.new)
-#puts server.port
+puts server.port
 server.start
