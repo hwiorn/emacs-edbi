@@ -3,7 +3,7 @@ require 'jimson'
 
 def start_process(cmd, host="http://localhost")
   # TODO run shell and read first line as port
-  port = 8889
+  port = 8999
   host = "#{host}:#{port}"
   client = Jimson::Client.new(host)
   return client
@@ -11,7 +11,7 @@ end
 
  # start a server process
 #cl = Elrpc.start_process(["ruby","echo.rb"])
-cl = start_process("ruby", "echo.rb")
+cl = start_process("ruby echo.rb")
 puts cl.ping("hhh")
 
 # # synchronous calling
