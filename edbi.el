@@ -312,13 +312,13 @@ shows the DB version string. (Some DB may return nil.)"
 
 (defun edbi:do-d (conn sql &optional params)
   "Execute SQL and return a number of affected rows."
-  (edbi:async-request 'do (cons sql params)
+  (edbi:async-request 'do (list sql params)
                       ;; :success-fn (jsonrpc-lambda (_) (message "TODO: return"))
                       ))
 
 (defun edbi:select-all-d (conn sql &optional params)
   "Execute the query SQL and returns all result rows."
-  (edbi:async-request 'select_all (cons sql params)
+  (edbi:async-request 'select_all (list sql params)
                       ;; :success-fn (jsonrpc-lambda (_) (message "TODO: return"))
                       ))
 
@@ -326,44 +326,53 @@ shows the DB version string. (Some DB may return nil.)"
   "[STH] Prepare the statement for SQL.
 This function holds the statement as a state in the edbi-bridge.
 The programmer should be aware of the internal state so as not to break the state."
-  (edbi:async-request 'prepare sql
+  (edbi:async-request 'prepare (list sql)
                       ;; :success-fn (jsonrpc-lambda (_) (message "TODO: return"))
                       ))
 
 (defun edbi:execute-d (conn &optional params)
   "[STH] Execute the statement."
-  (edbi:async-request 'execute params
+  (edbi:async-request 'execute (list params)
                       ;; :success-fn (jsonrpc-lambda (_) (message "TODO: return"))
                       ))
 
 (defun edbi:fetch-columns-d (conn)
   "[STH] Fetch a list of the column titles."
-  (epc:call-deferred
-   (edbi:connection-mngr conn) 'fetch-columns nil))
+  (edbi:async-request 'fetch_columns (list nil)
+                      ;; :success-fn (jsonrpc-lambda (_) (message "TODO: return"))
+                      ))
 
 (defun edbi:fetch-d (conn &optional num)
   "[STH] Fetch a row object. NUM is a number of retrieving rows. If NUM is nil, this function retrieves all rows."
-  (epc:call-deferred
-   (edbi:connection-mngr conn) 'fetch num))
+  (edbi:async-request 'fetch (list num)
+                      ;; :success-fn (jsonrpc-lambda (_) (message "TODO: return"))
+                      ))
 
 (defun edbi:auto-commit-d (conn flag)
   "Set the auto-commit flag. FLAG is 'true' or 'false' string."
-  (epc:call-deferred
-   (edbi:connection-mngr conn) 'auto-commit flag))
+  (edbi:async-request 'auto_commit (list flag)
+                      ;; :success-fn (jsonrpc-lambda (_) (message "TODO: return"))
+                      ))
 
 (defun edbi:commit-d (conn)
   "Commit transaction."
-  (epc:call-deferred
-   (edbi:connection-mngr conn) 'commit nil))
+  (edbi:async-request 'commit (list nil)
+                      ;; :success-fn (jsonrpc-lambda (_) (message "TODO: return"))
+                      ))
 
 (defun edbi:rollback-d (conn)
   "Rollback transaction."
-  (epc:call-deferred
-   (edbi:connection-mngr conn) 'rollback nil))
+  (edbi:async-request 'rollback (list nil)
+                      ;; :success-fn (jsonrpc-lambda (_) (message "TODO: return"))
+                      ))
 
 (defun edbi:disconnect-d (conn)
   "Close the DB connection."
-  (epc:stop-epc conn))
+  ;; TODO close db connection
+  (edbi:async-request 'disconnect (list nil)
+                      ;; :success-fn (jsonrpc-lambda (_) (message "TODO: return"))
+                      ))
+;; (epc:stop-epc conn))
 
 (defun edbi:status-info-d (conn)
   "Return a list of `err' code, `errstr' and `state'."
