@@ -303,10 +303,10 @@ This function returns the value of '$dbh->get_info(18)' which
 shows the DB version string. (Some DB may return nil.)"
   (let ((mngr (edbi:connection-mngr conn)))
     (prog1
-        (epc:call-sync mngr 'connect
-                       (list (edbi:data-source-uri data-source)
-                             (edbi:data-source-username data-source)
-                             (edbi:data-source-auth data-source)))
+        (edbi:request 'connect
+                      (list (edbi:data-source-uri data-source)
+                            (edbi:data-source-username data-source)
+                            (edbi:data-source-auth data-source)))
       (edbi:connection-ds-set conn data-source)
       (setf (epc:manager-title mngr) (edbi:data-source-uri data-source)))))
 
