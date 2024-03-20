@@ -31,8 +31,6 @@
 ;; This program depends on following programs:
 ;;  - deferred.el, concurrent.el / https://github.com/kiwanami/emacs-deferred
 ;;  - ctable.el   / https://github.com/kiwanami/emacs-ctable
-;;  - Perl/CPAN
-;;    - RPC::EPC::Service (and some dependent modules)
 ;;    - DBI and drivers, DBD::Sqlite, DBD::Pg, DBD::mysql
 
 ;; Place this program (edbi.el and edbi-bridge.rb) in your load path
@@ -1422,9 +1420,38 @@ This function kills the old buffer if it exists."
 
 
 ;; query editor and viewer
+(defun edbi:define-keymap (keymap-list &optional prefix)
+  "[internal] Keymap utility."
+  (let ((map (make-sparse-keymap)))
+    (mapc
+     (lambda (i)
+       (define-key map
+                   (if (stringp (car i))
+                       (read-kbd-macro
+                        (if prefix
+                            (replace-regexp-in-string "prefix" prefix (car i))
+                          (car i)))
+                     (car i))
+                   (cdr i)))
+     keymap-list)
+    map))
+
+(defun edbi:add-keymap (keymap keymap-list &optional prefix)
+  (loop with nkeymap = (copy-keymap keymap)
+        for i in keymap-list
+        do
+        (define-key nkeymap
+                    (if (stringp (car i))
+                        (read-kbd-macro
+                         (if prefix
+                             (replace-regexp-in-string "prefix" prefix (car i))
+                           (car i)))
+                      (car i))
+                    (cdr i))
+        finally return nkeymap))
 
 (defvar edbi:sql-mode-map
-  (epc:define-keymap
+  (edbi:define-keymap
    '(
      ("C-c C-c" . edbi:dbview-query-editor-execute-command)
      ("C-c q"   . edbi:dbview-query-editor-quit-command)
@@ -1691,7 +1718,7 @@ If the region is active in the query buffer, the selected string is executed."
 (defvar edbi:query-result-fix-header t "Fixed header option for query results.")
 
 (defvar edbi:dbview-query-result-keymap
-  (epc:define-keymap
+  (edbi:define-keymap
    '(
      ("q"   . edbi:dbview-query-result-quit-command)
      ("SPC" . edbi:dbview-query-result-quicklook-command)
@@ -1784,7 +1811,7 @@ If the region is active in the query buffer, the selected string is executed."
   (copy-region-as-kill (point-min) (point-max)))
 
 (setq edbi:dbview-query-result-quicklook-mode-map
-      (epc:add-keymap
+      (edbi:add-keymap
        edbi:dbview-query-result-quicklook-mode-map
        '(
          ("SPC" . kill-this-buffer)
@@ -1798,7 +1825,7 @@ If the region is active in the query buffer, the selected string is executed."
 (defvar edbi:dbview-table-buffer-name "*edbi-dbviewer-table*" "[internal] Table buffer name.")
 
 (defvar edbi:dbview-table-keymap
-  (epc:add-keymap
+  (edbi:add-keymap
    ctbl:table-mode-map
    '(
      ("g"   . edbi:dbview-tabledef-update-command)
