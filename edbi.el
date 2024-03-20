@@ -31,6 +31,7 @@
 ;; This program depends on following programs:
 ;;  - deferred.el, concurrent.el / https://github.com/kiwanami/emacs-deferred
 ;;  - ctable.el   / https://github.com/kiwanami/emacs-ctable
+;;  - Ruby/Gem
 ;;    - DBI and drivers, DBD::Sqlite, DBD::Pg, DBD::mysql
 
 ;; Place this program (edbi.el and edbi-bridge.rb) in your load path
