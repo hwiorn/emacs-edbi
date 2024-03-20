@@ -240,12 +240,34 @@
   (and edbi:connection
        (zerop (process-exit-status (jsonrpc--process edbi:connection)))))
 
-(defmacro edbi:rpc-request (&rest args)
+(defmacro edbi:request (&rest args)
   "Send a request to the edbi agent with ARGS."
   `(progn
      (unless (edbi:connection-alivep)
-       (edbi:start-agent))
+       (edbi:start))
      (jsonrpc-request edbi:connection ,@args)))
+
+
+(defmacro edbi:notify (&rest args)
+  "Send a notification to the copilot agent with ARGS."
+  `(progn
+     (unless (edbi:connection-alivep)
+       (edbi:start))
+     (jsonrpc-notify edbi:connection ,@args)))
+
+(cl-defmacro edbi:async-request (method params &rest args &key (success-fn #'edbi:ignore-response) &allow-other-keys)
+  "Send an asynchronous request to the edbi agent."
+  `(progn
+     (unless (edbi:connection-alivep)
+       (edbi:start))
+     ;; jsonrpc will use temp buffer for callbacks, so we need to save the current buffer and restore it inside callback
+     (let ((buf (current-buffer)))
+       (jsonrpc-async-request edbi:connection
+                              ,method ,params
+                              :success-fn (lambda (result)
+                                            (with-current-buffer buf
+                                              (funcall ,success-fn result)))
+                              ,@args))))
 
 (defun edbi:start ()
   "Start the EPC process. This function returns an `edbi:connection' object.
