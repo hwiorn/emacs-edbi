@@ -393,7 +393,7 @@ The programmer should be aware of the internal state so as not to break the stat
 
 (defun edbi:table-info-d (conn catalog schema table type)
   "Return a table info as (COLUMN-LIST ROW-LIST)."
-  (edbi:async-request 'table_info (list nil)
+  (edbi:async-request 'table_info (list catalog schema table type)
                       ;; :success-fn (jsonrpc-lambda (_) (message "TODO: return"))
                       ))
 ;; (epc:call-deferred
@@ -401,7 +401,7 @@ The programmer should be aware of the internal state so as not to break the stat
 
 (defun edbi:column-info-d (conn catalog schema table column)
   "Return a column info as (COLUMN-LIST ROW-LIST)."
-  (edbi:async-request 'column_info (list nil)
+  (edbi:async-request 'column_info (list catalog schema table column)
                       ;; :success-fn (jsonrpc-lambda (_) (message "TODO: return"))
                       ))
 ;; (epc:call-deferred
@@ -409,15 +409,23 @@ The programmer should be aware of the internal state so as not to break the stat
 
 (defun edbi:primary-key-info-d (conn catalog schema table)
   "Return a primary key info as (COLUMN-LIST ROW-LIST)."
-  (epc:call-deferred
-   (edbi:connection-mngr conn) 'primary-key-info (list catalog schema table)))
+  (edbi:async-request 'primary_key_info (list catalog schema table)
+                      ;; :success-fn (jsonrpc-lambda (_) (message "TODO: return"))
+                      ))
+;; (epc:call-deferred
+;;  (edbi:connection-mngr conn) 'primary-key-info (list catalog schema table)))
 
 (defun edbi:foreign-key-info-d (conn pk-catalog pk-schema pk-table
                                      fk-catalog fk-schema fk-table)
   "Return a foreign key info as (COLUMN-LIST ROW-LIST)."
-  (epc:call-deferred (edbi:connection-mngr conn) 'foreign-key-info
-                     (list pk-catalog pk-schema pk-table
-                           fk-catalog fk-schema fk-table)))
+  (edbi:async-request 'foreign_key_info (list pk-catalog pk-schema pk-table
+                                              fk-catalog fk-schema fk-table)
+                      (list catalog schema table)
+                      ;; :success-fn (jsonrpc-lambda (_) (message "TODO: return"))
+                      ))
+;; (epc:call-deferred (edbi:connection-mngr conn) 'foreign-key-info
+;;                    (list pk-catalog pk-schema pk-table
+;;                          fk-catalog fk-schema fk-table)))
 
 
 
