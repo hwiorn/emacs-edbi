@@ -3,6 +3,8 @@ require 'jimson'
 
 
 class EchoHandler
+  extend Jimson::Handler
+
   def ping(arg)
         "pong: #{arg}"
   end
