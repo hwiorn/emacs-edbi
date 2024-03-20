@@ -46,16 +46,16 @@ class EdbiHandler
   end
 
 
-  def prepare(sql)
-    return nil unless $dbh
-    if $sth
-      $sth.finish
-    end
-    $sth = $dbh.prepare sql
-    'sth'
+def prepare(sql)
+  return nil unless $dbh
+  if $sth
+    $sth.finish
   end
+  $sth = $dbh.prepare sql
+  'sth'
+end
 
-server.def_method "execute" do |params|
+def execute(params)
   return nil unless $sth
   $sth.execute params
 end
