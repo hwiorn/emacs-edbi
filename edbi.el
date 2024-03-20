@@ -235,12 +235,17 @@
 ;;
 ;;
 
+(defsubst edbi:connection-alivep ()
+  "Non-nil if the `edbi:connection' is alive."
+  (and edbi:connection
+       (zerop (process-exit-status (jsonrpc--process edbi:connection)))))
+
 (defmacro edbi:rpc-request (&rest args)
   "Send a request to the edbi agent with ARGS."
   `(progn
-     (unless (edbi--connection-alivep)
-       (edbi--start-agent))
-     (jsonrpc-request copilot--connection ,@args)))
+     (unless (edbi:connection-alivep)
+       (edbi:start-agent))
+     (jsonrpc-request edbi:connection ,@args)))
 
 (defun edbi:start ()
   "Start the EPC process. This function returns an `edbi:connection' object.
