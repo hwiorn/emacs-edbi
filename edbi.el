@@ -312,8 +312,12 @@ shows the DB version string. (Some DB may return nil.)"
 
 (defun edbi:do-d (conn sql &optional params)
   "Execute SQL and return a number of affected rows."
-  (epc:call-deferred
-   (edbi:connection-mngr conn) 'do (cons sql params)))
+  (edbi:async-request 'do (cons sql params)
+                      ;; :success-fn (lambda (_) (message "TODO: return"))
+                      )
+  ;; (epc:call-deferred
+  ;;  (edbi:connection-mngr conn) 'do (cons sql params))
+  )
 
 (defun edbi:select-all-d (conn sql &optional params)
   "Execute the query SQL and returns all result rows."
