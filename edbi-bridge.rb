@@ -11,8 +11,29 @@ $sth = nil
 class EdbiHandler
   extend Jimson::Handler
 
-  def add a, b
+  def add(a, b)
     a+b
+  end
+
+  def connect(data_source, username, auth)
+    auth = nil if auth.empty?
+    if $dbh
+      $dbh.disconnect
+    end
+
+    begin
+      $dbh = DBI.connect(data_source, username, auth)
+    rescue DBI::DatabaseError => e
+      abort("Could not connect to database:\n - Data Source (#{data_source})\n - User Name: (#{username}):\n - DBI error: (#{e.message})")
+    end
+
+    row = $dbh.select_one("SELECT VERSION()")
+    row[0]
+  end
+
+  def do(sql, params)
+    return nil unless $dbh
+    $dbh.do sql, *params
   end
 
   def ping(arg)
@@ -29,6 +50,7 @@ server = Jimson::Server.new(EdbiHandler.new,
 puts server.port
 server.start
 
+################
 
 server.def_method "connect"  do |data_source, username, auth|
   auth = nil if auth.empty?
