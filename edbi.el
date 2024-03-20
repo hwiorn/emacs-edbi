@@ -235,13 +235,17 @@
 ;;
 ;;
 
+(defconst edbi:ignore-response
+  (lambda (_))
+  "Simply ignore the response.")
+
 (defsubst edbi:connection-alivep ()
   "Non-nil if the `edbi:connection' is alive."
   (and edbi:connection
        (zerop (process-exit-status (jsonrpc--process edbi:connection)))))
 
 (defmacro edbi:request (&rest args)
-  "Send a request to the edbi agent with ARGS."
+  "Send a request to the edbi-bridge with ARGS."
   `(progn
      (unless (edbi:connection-alivep)
        (edbi:start))
@@ -249,14 +253,14 @@
 
 
 (defmacro edbi:notify (&rest args)
-  "Send a notification to the copilot agent with ARGS."
+  "Send a notification to the edbi-bridge with ARGS."
   `(progn
      (unless (edbi:connection-alivep)
        (edbi:start))
      (jsonrpc-notify edbi:connection ,@args)))
 
 (cl-defmacro edbi:async-request (method params &rest args &key (success-fn #'edbi:ignore-response) &allow-other-keys)
-  "Send an asynchronous request to the edbi agent."
+  "Send an asynchronous request to the edbi-bridge."
   `(progn
      (unless (edbi:connection-alivep)
        (edbi:start))
