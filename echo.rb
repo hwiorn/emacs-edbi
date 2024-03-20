@@ -1,13 +1,13 @@
-require 'elrpc'
+#require 'elrpc'
+require 'jimson'
 
- # start server
-server = Elrpc.start_server()
 
- # define a method
-server.def_method "echo" do |arg|
-  # just return the given argument value
-  arg
+class EchoHandler
+  def ping(arg):
+        "pong: #{arg}"
+  end
 end
 
- # sleep the main thread and wait for closing connection
-server.wait
+server = Jimson::Server.new(EchoHandler.new)
+#TODO puts "server.port"
+server.start
