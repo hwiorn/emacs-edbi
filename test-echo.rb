@@ -1,12 +1,16 @@
 require 'jimson'
 
 
-def start_process(cmd, host="http://localhost")
-  # TODO run shell and read first line as port
-  port = 8999
-  host = "#{host}:#{port}"
-  client = Jimson::Client.new(host)
-  return client
+class Elrpc
+  def start_process(cmd, host="http://localhost")
+    # TODO run shell and read first line as port
+    io = IO.popen(cmd)
+    port = @io.gets.to_i
+    port = 8999
+    host = "#{host}:#{port}"
+    client = Jimson::Client.new(host)
+    return client
+  end
 end
 
  # start a server process
