@@ -10,12 +10,8 @@ class EchoHandler
   end
 end
 
-server = Jimson::Server.new(EchoHandler.new, :port => 0)
-server.start { |e|
-  puts e
-}
-#t = Thread.new { puts server.start }
-#puts server.port
-sleep 1
+server = Jimson::Server.new(EchoHandler.new,
+                           :host => '127.0.0.1',
+                           :port => TCPServer.open('localhost', 0){|s| s.addr[1] })
 puts server.port
-t.join
+server.start
