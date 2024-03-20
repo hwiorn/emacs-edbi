@@ -313,16 +313,14 @@ shows the DB version string. (Some DB may return nil.)"
 (defun edbi:do-d (conn sql &optional params)
   "Execute SQL and return a number of affected rows."
   (edbi:async-request 'do (cons sql params)
-                      ;; :success-fn (lambda (_) (message "TODO: return"))
-                      )
-  ;; (epc:call-deferred
-  ;;  (edbi:connection-mngr conn) 'do (cons sql params))
-  )
+                      ;; :success-fn (jsonrpc-lambda (_) (message "TODO: return"))
+                      ))
 
 (defun edbi:select-all-d (conn sql &optional params)
   "Execute the query SQL and returns all result rows."
-  (epc:call-deferred
-   (edbi:connection-mngr conn) 'select-all (cons sql params)))
+  (edbi:async-request 'select_all (cons sql params)
+                      ;; :success-fn (jsonrpc-lambda (_) (message "TODO: return"))
+                      ))
 
 (defun edbi:prepare-d (conn sql)
   "[STH] Prepare the statement for SQL.
