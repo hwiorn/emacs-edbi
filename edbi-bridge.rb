@@ -61,7 +61,7 @@ class EdbiHandler
   end
 
   # $dbh.columns
-  def fetch-columns
+  def fetch_columns
     return nil unless $sth
     $sth.column_names
   end
@@ -72,7 +72,7 @@ class EdbiHandler
     return $sth.fetch_many num
   end
 
-  def auto-commit(flag)
+  def auto_commit(flag)
     return nil unless $dbh
     ac = flag == "true" ? 1 : 0
     $dbh.do "SET autocommit = #{ac}"
@@ -105,7 +105,7 @@ class EdbiHandler
   end
 
   # TODO: implement it
-  def type-info-all()
+  def type_info_all()
     return nil unless $dbh
     # my $ret = $dbh->type_info_all;
     # print STDERR Dumper $ret;
