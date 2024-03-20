@@ -18,7 +18,7 @@ end
 # cl = Elrpc.start_process(["ruby","echo.rb"])
 cl = JElrpc.start_process(["ruby","echo.rb"])
 # cl = JElrpc.start_process("ruby echo.rb")
-puts cl.ping("hhh")
+puts cl.ping "hhh"
 
 # # synchronous calling
 # puts cl.call_method("echo", "1 hello")
