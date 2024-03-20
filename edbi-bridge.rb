@@ -11,26 +11,24 @@ $sth = nil
 class EdbiHandler
   extend Jimson::Handler
 
+  def add a, b
+    a+b
+  end
+
   def ping(arg)
         "pong: #{arg}"
   end
 end
 
+ # FIXME: make as cli option
 host = '127.0.0.1'
 port = TCPServer.open(host, 0){|s| s.addr[1] }
 server = Jimson::Server.new(EdbiHandler.new,
-                           :host => host, # FIXME: option
+                           :host => host,
                            :port => port)
 puts server.port
 server.start
 
- # start server
-server = Elrpc.start_server()
-
-server.def_method "add"  do |a, b|
-  a+b
-  next "hh"
-end
 
 server.def_method "connect"  do |data_source, username, auth|
   auth = nil if auth.empty?
