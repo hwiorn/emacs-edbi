@@ -326,13 +326,15 @@ shows the DB version string. (Some DB may return nil.)"
   "[STH] Prepare the statement for SQL.
 This function holds the statement as a state in the edbi-bridge.
 The programmer should be aware of the internal state so as not to break the state."
-  (epc:call-deferred
-   (edbi:connection-mngr conn) 'prepare sql))
+  (edbi:async-request 'prepare sql
+                      ;; :success-fn (jsonrpc-lambda (_) (message "TODO: return"))
+                      ))
 
 (defun edbi:execute-d (conn &optional params)
   "[STH] Execute the statement."
-  (epc:call-deferred
-   (edbi:connection-mngr conn) 'execute params))
+  (edbi:async-request 'execute params
+                      ;; :success-fn (jsonrpc-lambda (_) (message "TODO: return"))
+                      ))
 
 (defun edbi:fetch-columns-d (conn)
   "[STH] Fetch a list of the column titles."
