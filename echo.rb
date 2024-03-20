@@ -10,6 +10,6 @@ class EchoHandler
   end
 end
 
-server = Jimson::Server.new(EchoHandler.new)
+server = Jimson::Server.new(EchoHandler.new, :port => 0)
 puts server.port
-server.start(:port => 0)
+server.start
