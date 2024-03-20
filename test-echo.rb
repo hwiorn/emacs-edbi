@@ -1,12 +1,14 @@
 require 'jimson'
 
 
-class Elrpc
-  def start_process(cmd, host="http://localhost")
+module JElrpc
+  def self.start_process(cmd, host="http://localhost")
     # TODO run shell and read first line as port
     io = IO.popen(cmd)
-    port = @io.gets.to_i
-    port = 8999
+    port = io.gets.to_i
+    # if !port
+    #   port = 8999
+    # end
     host = "#{host}:#{port}"
     client = Jimson::Client.new(host)
     return client
@@ -14,8 +16,9 @@ class Elrpc
 end
 
  # start a server process
-#cl = Elrpc.start_process(["ruby","echo.rb"])
-cl = start_process("ruby echo.rb")
+# cl = Elrpc.start_process(["ruby","echo.rb"])
+cl = JElrpc.start_process(["ruby","echo.rb"])
+# cl = JElrpc.start_process("ruby echo.rb")
 puts cl.ping("hhh")
 
 # # synchronous calling
