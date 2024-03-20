@@ -2,7 +2,7 @@
 
 source 'https://rubygems.org'
 
-gem 'dbi', '~> 0.4.5'
+#gem 'dbi', '~> 0.4.5'
 #gem 'elrpc', '~> 0.0.7'
 #gem 'elrpc', git: "git@github.com:hwiorn/ruby-elrpc.git"
 #gem 'rails', '~> 7.1'
@@ -13,3 +13,6 @@ gem 'dbi', '~> 0.4.5'
 gem "timeout", "~> 0.4.1"
 
 gem "dbd-sqlite3", "~> 1.2"
+gem "jimson"
+
+gem "rack"
