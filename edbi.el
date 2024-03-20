@@ -1,10 +1,11 @@
 ;;; edbi.el --- Database independent interface for Emacs
 
 ;; Copyright (C) 2011, 2012, 2013  SAKURAI Masashi
+;; Copyright (C) 2024 Tim Lee
 
 ;; Author: SAKURAI Masashi <m.sakurai at kiwanami.net>
 ;; Version: 0.1.3
-;; Keywords: database, epc
+;; Keywords: database, dbi
 ;; URL: https://github.com/kiwanami/emacs-edbi
 
 ;; This program is free software; you can redistribute it and/or modify
@@ -22,20 +23,19 @@
 
 ;;; Commentary:
 
-;; This program connects the database server through Perl's DBI,
+;; This program connects the database server through Ruby's DBI,
 ;; and provides DB-accessing API and the simple management UI.
 
 ;;; Installation:
 
 ;; This program depends on following programs:
 ;;  - deferred.el, concurrent.el / https://github.com/kiwanami/emacs-deferred
-;;  - epc.el      / https://github.com/kiwanami/emacs-epc
 ;;  - ctable.el   / https://github.com/kiwanami/emacs-ctable
 ;;  - Perl/CPAN
 ;;    - RPC::EPC::Service (and some dependent modules)
 ;;    - DBI and drivers, DBD::Sqlite, DBD::Pg, DBD::mysql
 
-;; Place this program (edbi.el and edbi-bridge.pl) in your load path
+;; Place this program (edbi.el and edbi-bridge.rb) in your load path
 ;; and add following code.
 
 ;; (require 'edbi)
@@ -85,8 +85,9 @@
 
 (eval-when-compile (require 'cl)
                    (require 'auto-complete nil t))
-(require 'epc)
+;;(require 'epc)
 (require 'sql)
+(require 'jsonrpc)
 
 ;;; Configurations
 
@@ -125,7 +126,7 @@
            ((eq '<- (nth 1 first-d))
             (let ((var (car first-d)) (f (nth 2 first-d)))
               `(deferred:nextc ,f
-                 (lambda (,vsym) (setq ,var ,vsym)))))
+                (lambda (,vsym) (setq ,var ,vsym)))))
            (t first-d)))
          (ds (loop for i in elements
                    collect
@@ -134,11 +135,11 @@
                      `(deferred:nextc ,pit ,i))
                     ((eq '<- (nth 1 i))
                      (let ((var (car i)) (f (nth 2 i)))
-                     `(deferred:nextc ,pit
-                        (lambda (x)
-                          (deferred:$ ,f
-                            (deferred:nextc ,pit
-                              (lambda (,vsym) (setq ,var ,vsym))))))))
+                       `(deferred:nextc ,pit
+                         (lambda (x)
+                           (deferred:$ ,f
+                                       (deferred:nextc ,pit
+                                                       (lambda (,vsym) (setq ,var ,vsym))))))))
                     (t
                      `(deferred:nextc ,pit (lambda (x) ,i)))))))
     `(deferred:$ ,fs ,@ds)))
@@ -147,7 +148,7 @@
   "Deferred function utility, like liftM."
   (let ((vsym (gensym)))
     `(deferred:nextc ,deferred
-       (lambda (,vsym) (,f ,vsym)))))
+      (lambda (,vsym) (,f ,vsym)))))
 
 (defmacro edbi:sync (fsym conn &rest args)
   "Synchronous calling wrapper macro. FSYM is deferred function in the edbi."
@@ -336,7 +337,7 @@ The programmer should be aware of the internal state so as not to break the stat
    (edbi:connection-mngr conn) 'primary-key-info (list catalog schema table)))
 
 (defun edbi:foreign-key-info-d (conn pk-catalog pk-schema pk-table
-                                   fk-catalog fk-schema fk-table)
+                                     fk-catalog fk-schema fk-table)
   "Return a foreign key info as (COLUMN-LIST ROW-LIST)."
   (epc:call-deferred (edbi:connection-mngr conn) 'foreign-key-info
                      (list pk-catalog pk-schema pk-table
@@ -366,7 +367,7 @@ The programmer should be aware of the internal state so as not to break the stat
 ;; TODO: collectiong indexes
 
 (defstruct edbi:dbd name table-info-args table-info-filter
-  column-info-args column-info-filter type-info-filter limit-format keywords)
+           column-info-args column-info-filter type-info-filter limit-format keywords)
 
 (defvar edbi:dbd-alist nil "[internal] List of the dbd name and `edbi:dbd' object.")
 (defvar edbi:dbd-default nil "[internal] Default `edbi:dbd' object.")
@@ -556,21 +557,21 @@ The programmer should be aware of the internal state so as not to break the stat
 
 (defun edbi:dbd-init-postgresql ()
   "[internal] Initialize `edbi:dbd' object for Postgresql."
-        (make-edbi:dbd :name "dbi:Pg"
-                       :table-info-args
-                       (lambda (conn) (list nil nil nil nil))
-                       :table-info-filter
-                       'edbi:dbd-default-table-info-filter
-                       :column-info-args
-                       (lambda (conn table) (list nil nil table nil))
-                       :column-info-filter
-                       'edbi:dbd-default-column-info-filter
-                       :type-info-filter
-                       'edbi:dbd-default-type-info-filter
-                       :limit-format
-                       "SELECT * FROM %table% LIMIT %limit%"
-                       :keywords
-                       'edbi:dbd-init-postgresql-keywords))
+  (make-edbi:dbd :name "dbi:Pg"
+                 :table-info-args
+                 (lambda (conn) (list nil nil nil nil))
+                 :table-info-filter
+                 'edbi:dbd-default-table-info-filter
+                 :column-info-args
+                 (lambda (conn table) (list nil nil table nil))
+                 :column-info-filter
+                 'edbi:dbd-default-column-info-filter
+                 :type-info-filter
+                 'edbi:dbd-default-type-info-filter
+                 :limit-format
+                 "SELECT * FROM %table% LIMIT %limit%"
+                 :keywords
+                 'edbi:dbd-init-postgresql-keywords))
 
 (defun edbi:dbd-init-postgresql-keywords ()
   "[internal] "
@@ -945,7 +946,7 @@ The programmer should be aware of the internal state so as not to break the stat
     (when (file-exists-p file)
       (let ((buf (find-file-noselect file)) ret)
         (unwind-protect
-			(with-current-buffer buf
+	    (with-current-buffer buf
               (goto-char (point-min))
               (setq ret (loop for i in (read buf)
                               collect
@@ -1060,10 +1061,10 @@ This function kills the old buffer if it exists."
         (widget-put menu-history
                     :notify
                     (lambda (widget &rest ignore)
-                        (edbi:dialog-replace-buffer-window
-                         (current-buffer)
-                         (widget-value widget) on-ok-func (widget-value cbshow))
-                        (widget-forward 4)))
+                      (edbi:dialog-replace-buffer-window
+                       (current-buffer)
+                       (widget-value widget) on-ok-func (widget-value cbshow))
+                      (widget-forward 4)))
 
         ;; setup widgets
         (use-local-map widget-keymap)
@@ -1209,18 +1210,18 @@ This function kills the old buffer if it exists."
       (pop-to-buffer db-buf))
     (lexical-let ((conn conn) (dbd (edbi:dbd-get conn)) table-info)
       (deferred:error
-        (edbi:seq
-         (table-info <- (apply 'edbi:table-info-d conn
-                               (funcall (edbi:dbd-table-info-args dbd) conn)))
-         (lambda (x)
-           (edbi:dbview-create-buffer conn dbd table-info))
-         (lambda (x)
-           (run-hook-with-args 'edbi:dbview-update-hook conn)))
-        (lambda (err)
-          (with-current-buffer db-buf
-            (let (buffer-read-only)
-              (insert "\n" "Connection Error : "
-                      (format "%S" err) "\n" "Check your setting..."))))))))
+       (edbi:seq
+        (table-info <- (apply 'edbi:table-info-d conn
+                              (funcall (edbi:dbd-table-info-args dbd) conn)))
+        (lambda (x)
+          (edbi:dbview-create-buffer conn dbd table-info))
+        (lambda (x)
+          (run-hook-with-args 'edbi:dbview-update-hook conn)))
+       (lambda (err)
+         (with-current-buffer db-buf
+           (let (buffer-read-only)
+             (insert "\n" "Connection Error : "
+                     (format "%S" err) "\n" "Check your setting..."))))))))
 
 (defun edbi:dbview-create-buffer (conn dbd table-info)
   "[internal] Render the DB Viewer buffer with the table-info."
@@ -1534,43 +1535,43 @@ If the region is active in the query buffer, the selected string is executed."
   (lexical-let ((conn conn) (time-begin (float-time))
                 (sql sql) (result-buf result-buf))
     (cc:semaphore-with edbi:dbview-query-execute-semaphore
-      (lambda (x)
-        (message "EDBI: Waiting for the query...")
-        (deferred:$
-          (edbi:seq
-           (edbi:prepare-d conn sql)
-           (edbi:execute-d conn nil)
-           (lambda (exec-result)
-             (message "Result Code: %S  /  %.3f seconds"
-                      exec-result (- (float-time) time-begin))
-             (cond
-              ;; SELECT
-              ((or (equal "0E0" exec-result)
-                   (and exec-result (numberp exec-result))) ; some DBD returns rows number
-               (edbi:dbview-query-editor-history-add sql)
-               (lexical-let (rows header (exec-result exec-result))
-                 (edbi:seq
-                  (header <- (edbi:fetch-columns-d conn))
-                  (rows <- (edbi:fetch-d conn edbi:dbview-query-result-fetch-num))
-                  (lambda (x)
-                    (cond
-                     ((or rows (equal "0E0" exec-result)) ; select results
-                      (if rows
-                          (edbi:dbview-query-result-open conn result-buf header rows)
-                        (progn
-                          (message "No rows returned.")
-                          (kill-buffer result-buf))))
-                     (t    ; update results?
-                      (edbi:dbview-query-result-text conn result-buf exec-result)))))))
-              ;; ERROR
-              ((null exec-result)
-               (edbi:dbview-query-result-error conn result-buf))
-              ;; UPDATE etc
-              (t
-               (edbi:dbview-query-editor-history-add sql)
-               (edbi:dbview-query-result-text conn result-buf exec-result)))))
-          (deferred:error it
-            (lambda (err) (message "ERROR : %S" err))))))))
+                       (lambda (x)
+                         (message "EDBI: Waiting for the query...")
+                         (deferred:$
+                          (edbi:seq
+                           (edbi:prepare-d conn sql)
+                           (edbi:execute-d conn nil)
+                           (lambda (exec-result)
+                             (message "Result Code: %S  /  %.3f seconds"
+                                      exec-result (- (float-time) time-begin))
+                             (cond
+                              ;; SELECT
+                              ((or (equal "0E0" exec-result)
+                                   (and exec-result (numberp exec-result))) ; some DBD returns rows number
+                               (edbi:dbview-query-editor-history-add sql)
+                               (lexical-let (rows header (exec-result exec-result))
+                                 (edbi:seq
+                                  (header <- (edbi:fetch-columns-d conn))
+                                  (rows <- (edbi:fetch-d conn edbi:dbview-query-result-fetch-num))
+                                  (lambda (x)
+                                    (cond
+                                     ((or rows (equal "0E0" exec-result)) ; select results
+                                      (if rows
+                                          (edbi:dbview-query-result-open conn result-buf header rows)
+                                        (progn
+                                          (message "No rows returned.")
+                                          (kill-buffer result-buf))))
+                                     (t    ; update results?
+                                      (edbi:dbview-query-result-text conn result-buf exec-result)))))))
+                              ;; ERROR
+                              ((null exec-result)
+                               (edbi:dbview-query-result-error conn result-buf))
+                              ;; UPDATE etc
+                              (t
+                               (edbi:dbview-query-editor-history-add sql)
+                               (edbi:dbview-query-result-text conn result-buf exec-result)))))
+                          (deferred:error it
+                                          (lambda (err) (message "ERROR : %S" err))))))))
 
 (defun edbi:dbview-query-result-text (conn buf execute-result)
   "[internal] Display update results."
@@ -1618,8 +1619,8 @@ If the region is active in the query buffer, the selected string is executed."
   "[internal] Display SELECT results."
   (lexical-let ((conn conn) (rows rows))
     (let (table-cp async-model
-          (limit edbi:dbview-query-result-fetch-num)
-          (param (copy-ctbl:param ctbl:default-rendering-param)))
+                   (limit edbi:dbview-query-result-fetch-num)
+                   (param (copy-ctbl:param ctbl:default-rendering-param)))
       (setf (ctbl:param-fixed-header param) edbi:query-result-fix-header)
       (setq async-model
             (if (< (length rows) limit) rows
@@ -1631,13 +1632,13 @@ If the region is active in the query buffer, the selected string is executed."
                     (rows (funcall resf rows)
                           (setq rows nil))
                     (t (deferred:$
-                         (edbi:fetch-d conn len)
-                         (deferred:nextc it
-                           (lambda (rs)
-                             (funcall resf rs))) ; should automatically stop
-                         (deferred:error it
-                           (lambda (err)
-                             (funcall errf err))))))))
+                        (edbi:fetch-d conn len)
+                        (deferred:nextc it
+                                        (lambda (rs)
+                                          (funcall resf rs))) ; should automatically stop
+                        (deferred:error it
+                                        (lambda (err)
+                                          (funcall errf err))))))))
                :init-num limit :more-num limit
                :reset (lambda () (message " EDBI:reset") nil)
                :cancel (lambda () (message " EDBI:cancel") nil))))
@@ -1913,23 +1914,23 @@ If the region is active in the query buffer, the selected string is executed."
   "Initialization for auto-complete."
   (when (eq 'auto-complete edbi:completion-tool) 
     (ac-define-source edbi:tables
-      '((candidates . edbi:ac-editor-table-candidates)
-        (candidate-face . edbi:face-ac-table-candidate-face)
-        (selection-face . edbi:face-ac-table-selection-face)
-        (symbol . "T")))
+                      '((candidates . edbi:ac-editor-table-candidates)
+                        (candidate-face . edbi:face-ac-table-candidate-face)
+                        (selection-face . edbi:face-ac-table-selection-face)
+                        (symbol . "T")))
     (ac-define-source edbi:columns
-      '((candidates . edbi:ac-editor-column-candidates)
-        (candidate-face . edbi:face-ac-column-candidate-face)
-        (selection-face . edbi:face-ac-column-selection-face)
-        (symbol . "C")))
+                      '((candidates . edbi:ac-editor-column-candidates)
+                        (candidate-face . edbi:face-ac-column-candidate-face)
+                        (selection-face . edbi:face-ac-column-selection-face)
+                        (symbol . "C")))
     (ac-define-source edbi:types
-      '((candidates . edbi:ac-editor-type-candidates)
-        (candidate-face . edbi:face-ac-type-candidate-face)
-        (selection-face . edbi:face-ac-type-selection-face)
-        (symbol . "+")))
+                      '((candidates . edbi:ac-editor-type-candidates)
+                        (candidate-face . edbi:face-ac-type-candidate-face)
+                        (selection-face . edbi:face-ac-type-selection-face)
+                        (symbol . "+")))
     (ac-define-source edbi:keywords
-      '((candidates . edbi:ac-editor-keyword-candidates)
-        (symbol . "K")))
+                      '((candidates . edbi:ac-editor-keyword-candidates)
+                        (symbol . "K")))
     (add-hook 'edbi:sql-mode-hook 'edbi:ac-edbi:sql-mode-hook)
     (unless (memq 'edbi:sql-mode ac-modes)
       (setq ac-modes
@@ -1938,9 +1939,9 @@ If the region is active in the query buffer, the selected string is executed."
 (defun edbi:completion-at-point-function ()
   "Abnormal hook function for `completion-at-point-functions'."
   (lexical-let* ((end (point))
-         (beg (save-excursion
-                (skip-chars-backward "^ \n\r\t,:")
-                (point))))
+                 (beg (save-excursion
+                        (skip-chars-backward "^ \n\r\t,:")
+                        (point))))
     (list beg end
           (completion-table-dynamic
            (lambda (prefix)
@@ -1953,7 +1954,7 @@ If the region is active in the query buffer, the selected string is executed."
                                    (when (listp i) (setq i (car i)))
                                    i) ret))
                ret))))))
-    
+
 (defun edbi:ac-edbi:sql-mode-hook ()
   (make-local-variable 'ac-sources)
   (setq ac-sources '(ac-source-words-in-same-mode-buffers
@@ -1994,28 +1995,28 @@ If the region is active in the query buffer, the selected string is executed."
       (message "DB Word collection is started.")
       (setq edbi:ac-editor-word-candidate-update-state t)
       (deferred:try
-        (edbi:seq
-         (tables <- (edbi:ac-editor-word-candidate-update-tables conn dbd acs))
-         (edbi:ac-editor-word-candidate-update-columns conn dbd acs tables)
-         (edbi:ac-editor-word-candidate-update-types conn dbd acs)
-         (edbi:ac-editor-word-candidate-update-keywords conn dbd acs))
-        :finally
-        (lambda (x)
-          (message "DB Word collection is finished.")
-          (edbi:connection-ac-set conn acs)
-          (setq edbi:ac-editor-word-candidate-update-state nil))))))
+       (edbi:seq
+        (tables <- (edbi:ac-editor-word-candidate-update-tables conn dbd acs))
+        (edbi:ac-editor-word-candidate-update-columns conn dbd acs tables)
+        (edbi:ac-editor-word-candidate-update-types conn dbd acs)
+        (edbi:ac-editor-word-candidate-update-keywords conn dbd acs))
+       :finally
+       (lambda (x)
+         (message "DB Word collection is finished.")
+         (edbi:connection-ac-set conn acs)
+         (setq edbi:ac-editor-word-candidate-update-state nil))))))
 
 (defun edbi:ac-editor-word-candidate-update-tables (conn dbd acs)
   "[internal] "
   (lexical-let ((conn conn) (dbd dbd) (acs acs) table-info tables)
     (cc:semaphore-with edbi:dbview-query-execute-semaphore
-      (lambda ()
-        (edbi:seq
-         (table-info <- (apply 'edbi:table-info-d conn
-                               (funcall (edbi:dbd-table-info-args dbd) conn)))
-         (lambda (x)
-           ;; return -> tables
-           (edbi:ac-editor-word-candidate-update-tables1 conn dbd acs table-info)))))))
+                       (lambda ()
+                         (edbi:seq
+                          (table-info <- (apply 'edbi:table-info-d conn
+                                                (funcall (edbi:dbd-table-info-args dbd) conn)))
+                          (lambda (x)
+                            ;; return -> tables
+                            (edbi:ac-editor-word-candidate-update-tables1 conn dbd acs table-info)))))))
 
 (defun edbi:ac-editor-word-candidate-update-tables1 (conn dbd acs table-info)
   "[internal] "
@@ -2038,47 +2039,47 @@ If the region is active in the query buffer, the selected string is executed."
                 (tables tables))
     (deferred:$
      (deferred:loop tables
-       (lambda (table)
-         (lexical-let ((table table))
-           (cc:semaphore-with edbi:dbview-query-execute-semaphore
-             (lambda (table)
-               ;;(message "COLUMN--: %s" table)
-               (deferred:nextc
-                 (apply 'edbi:column-info-d conn
-                        (funcall (edbi:dbd-column-info-args dbd) conn table))
-                 (lambda (ci)
-                   ;;(message "COLUMN-INFO: %S" ci)
-                   (unless column-header
-                     (setq column-header (car ci)))
-                   (setq column-rows
-                         (append (cadr ci) column-rows)))))))))
+                    (lambda (table)
+                      (lexical-let ((table table))
+                        (cc:semaphore-with edbi:dbview-query-execute-semaphore
+                                           (lambda (table)
+                                             ;;(message "COLUMN--: %s" table)
+                                             (deferred:nextc
+                                              (apply 'edbi:column-info-d conn
+                                                     (funcall (edbi:dbd-column-info-args dbd) conn table))
+                                              (lambda (ci)
+                                                ;;(message "COLUMN-INFO: %S" ci)
+                                                (unless column-header
+                                                  (setq column-header (car ci)))
+                                                (setq column-rows
+                                                      (append (cadr ci) column-rows)))))))))
      (deferred:nextc it
-       (lambda (x)
-         (let ((column-info (list column-header column-rows)))
-           ;;(message "COLUMN-INFO-ALL: %S" column-info)
-           (edbi:ac-editor-word-candidate-update-columns1 conn dbd acs column-info)))))))
+                     (lambda (x)
+                       (let ((column-info (list column-header column-rows)))
+                         ;;(message "COLUMN-INFO-ALL: %S" column-info)
+                         (edbi:ac-editor-word-candidate-update-columns1 conn dbd acs column-info)))))))
 
 (defun edbi:ac-editor-word-candidate-update-columns1 (conn dbd acs column-info)
   "[internal] "
   (setf (edbi:ac-candidates-columns acs)
-         (loop for (table-name column-name type-name column-size nullable remarks) in
-               (funcall (edbi:dbd-column-info-filter dbd) column-info)
-               collect
-               (cons (propertize column-name 'summary table-name
-                                 'document (format "%s %s %s\n%s" type-name
-                                                   column-size nullable remarks))
-                     column-name))) nil)
+        (loop for (table-name column-name type-name column-size nullable remarks) in
+              (funcall (edbi:dbd-column-info-filter dbd) column-info)
+              collect
+              (cons (propertize column-name 'summary table-name
+                                'document (format "%s %s %s\n%s" type-name
+                                                  column-size nullable remarks))
+                    column-name))) nil)
 
 (defun edbi:ac-editor-word-candidate-update-types (conn dbd acs)
   "[internal] "
   (lexical-let ((conn conn) (dbd dbd) (acs acs) type-info)
     (cc:semaphore-with edbi:dbview-query-execute-semaphore
-      (lambda ()
-        (edbi:seq
-         (type-info <- (edbi:type-info-all-d conn))
-         (lambda (x)
-           ;;(message "TYPE-INFO: %S" type-info)
-           (edbi:ac-editor-word-candidate-update-types1 conn dbd acs type-info)))))))
+                       (lambda ()
+                         (edbi:seq
+                          (type-info <- (edbi:type-info-all-d conn))
+                          (lambda (x)
+                            ;;(message "TYPE-INFO: %S" type-info)
+                            (edbi:ac-editor-word-candidate-update-types1 conn dbd acs type-info)))))))
 
 (defun edbi:ac-editor-word-candidate-update-types1 (conn dbd acs type-info)
   "[internal] "
