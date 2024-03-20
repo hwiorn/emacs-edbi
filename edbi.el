@@ -232,6 +232,15 @@
 
 
 ;; API
+;;
+;;
+
+(defmacro edbi:rpc-request (&rest args)
+  "Send a request to the edbi agent with ARGS."
+  `(progn
+     (unless (edbi--connection-alivep)
+       (edbi--start-agent))
+     (jsonrpc-request copilot--connection ,@args)))
 
 (defun edbi:start ()
   "Start the EPC process. This function returns an `edbi:connection' object.
@@ -241,9 +250,15 @@ for library users to inspect where the problem is occurred. If
 `edbi:connect' is failed, the DB setting or environment is
 wrong."
   (edbi:connection
-   (jsonrpc-process-connection "edbi-bridge-server"
-                               :command (car edbi:driver-info)
-                               :command-args (cdr edbi:driver-info))))
+   (jsonrpc-process-connection
+    :name "edbi-bridge-server"
+    :process
+    (make-process :name "ruby edbi-bridge.rb"
+                  :command edbi:driver-info
+                  :coding 'utf-8-emacs-unix
+                  :connection-type 'pipe
+                  :stderr (get-buffer-create " *edbi stderr*")
+                  :noquery t))))
 
 (defun edbi:finish (conn)
   "Terminate the EPC process."
