@@ -1,4 +1,4 @@
-require 'elrpc'
+require 'jimson'
 require 'dbi'
 
 $dbh = nil
@@ -7,6 +7,22 @@ $sth = nil
 # https://github.com/kiwanami/ruby-elrpc
 # https://metacpan.org/pod/DBI
 # https://github.com/Pistos/ruby-dbi
+
+class EdbiHandler
+  extend Jimson::Handler
+
+  def ping(arg)
+        "pong: #{arg}"
+  end
+end
+
+host = '127.0.0.1'
+port = TCPServer.open(host, 0){|s| s.addr[1] }
+server = Jimson::Server.new(EdbiHandler.new,
+                           :host => host, # FIXME: option
+                           :port => port)
+puts server.port
+server.start
 
  # start server
 server = Elrpc.start_server()
